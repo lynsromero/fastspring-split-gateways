@@ -71,6 +71,9 @@ class fssg_WC_Gateway_FastSpring extends WC_Payment_Gateway
         $this->title = self::get_setting('title');
         $this->description = self::get_setting('description');
 
+        // Give the admin Payments overview a real logo (it reads $this->icon as a URL).
+        $this->icon = FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/fastspring-logo.png';
+
         if (self::get_setting('testmode')) {
             $this->description .= "\n" . sprintf(__('TEST MODE ENABLED. In test mode, you can use the card numbers provided in the test panel of the FastSpring dashboard. Please check the documentation "<a target="_blank" href="%s">Testing Orders</a>" for more information.', 'woocommerce-gateway-fastspring'), 'http://docs.fastspring.com/activity-events-orders-and-subscriptions/test-orders');
 

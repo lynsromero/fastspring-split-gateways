@@ -68,7 +68,9 @@ add_action('plugins_loaded', function () {
       }
 
       $this->description = $this->get_option('description', $this->default_description);
-      $this->icon = $this->get_option('icon', $this->default_icon);
+      // Expose a resolvable URL for the admin Payments overview (WooCommerce reads
+      // $gateway->icon as a URL) while the stored value stays a slug/array.
+      $this->icon = $this->resolve_icon_url($this->get_option('icon', $this->default_icon));
 
       // 3. ONLY hook the save action if we are actually in this section
       if ($current_section === $this->id) {
@@ -186,11 +188,18 @@ add_action('plugins_loaded', function () {
     /**
      * Resolves a stored icon value to a displayable URL.
      *
-     * @param mixed $value Stored icon value (slug, custom:<url> or raw URL).
+     * Accepts a preset slug, a `custom:<url>` value, a raw URL or (for the
+     * credit card gateway) an array of slugs, in which case the first selected
+     * slug is used.
+     *
+     * @param mixed $value Stored icon value.
      * @return string
      */
     protected function resolve_icon_url($value)
     {
+      if (is_array($value)) {
+        $value = count($value) ? (string) reset($value) : '';
+      }
       $options = $this->icon_options();
       if (is_string($value) && isset($options[$value])) {
         return FS_SPLIT_GATEWAY_URL . 'assets/icons/' . $value . '.svg';
@@ -211,21 +220,19 @@ add_action('plugins_loaded', function () {
     {
       $icon_html = '';
       $icons_folder_url = FS_SPLIT_GATEWAY_URL . 'assets/icons/';
+      $stored_icon = $this->get_option('icon', $this->default_icon);
 
-      if (is_array($this->icon)) {
+      if (is_array($stored_icon)) {
         $icon_html .= '<span class="fs-card-inline-icons-container">';
-        foreach ($this->icon as $card) {
+        foreach ($stored_icon as $card) {
           $icon_url = $icons_folder_url . strtolower($card) . '.svg';
           // Wrap each image in a 'box' class
           $icon_html .= '<img src="' . esc_url($icon_url) . '" alt="' . esc_attr($card) . '" class="fs-inline-icon" />';
         }
         $icon_html .= '</span>';
       } elseif (!empty($this->icon) && is_string($this->icon)) {
-        // Slugs resolve to the bundled preset SVG; custom values are URLs.
-        $icon_url = $this->resolve_icon_url($this->icon);
-        if (!empty($icon_url)) {
-          $icon_html = '<img src="' . esc_url($icon_url) . '" alt="' . esc_attr($this->title) . '" class="fastspring-icon" />';
-        }
+        // $this->icon is already a resolved URL (see constructor).
+        $icon_html = '<img src="' . esc_url($this->icon) . '" alt="' . esc_attr($this->title) . '" class="fastspring-icon" />';
       }
 
       return apply_filters('woocommerce_gateway_icon', $icon_html, $this->id);
