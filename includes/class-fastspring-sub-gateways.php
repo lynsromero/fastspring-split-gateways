@@ -124,6 +124,7 @@ add_action('plugins_loaded', function () {
     {
       return array(
         'paypal' => __('PayPal', 'woocommerce'),
+        'alipay' => __('AliPay', 'woocommerce'),
         'amazon-pay' => __('Amazon Pay', 'woocommerce'),
         'google-pay' => __('Google Pay', 'woocommerce'),
         'wire-transfer' => __('Wire Transfer', 'woocommerce'),
@@ -400,6 +401,24 @@ wp_script_add_data(
     }
   }
 
+  class fssg_WC_Gateway_FastSpring_AliPay extends fssg_WC_FS_Manual_Gateway
+  {
+    public function __construct()
+    {
+      $this->id = 'fastspring_alipay';
+      $this->method_title = 'FS: AliPay';
+      $this->default_title = 'Pay with AliPay';
+      $this->default_icon = 'alipay';
+      $this->default_description = 'Pay securely with AliPay using your Alipay account, linked card, or bank account. Fast and reliable for customers in China and across Asia.';
+
+      parent::__construct();
+
+      if (empty($this->title)) {
+        $this->title = $this->default_title;
+      }
+    }
+  }
+
   // --- WOOCOMMERCE BLOCKS INTEGRATION ---
   // Now that the classes are defined, we can define the blocks integration
   if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
@@ -483,6 +502,7 @@ wp_script_add_data(
       $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_Amazon()));
       $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_Wire()));
       $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_GooglePay()));
+      $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_AliPay()));
     });
   }
 
@@ -498,6 +518,7 @@ function fssg_woocommerce_payment_gateways_order($gateways)
     'fastspring_amazon' => 'fssg_WC_Gateway_FastSpring_Amazon',
     'fastspring_wire' => 'fssg_WC_Gateway_FastSpring_Wire',
     'fastspring_googlepay' => 'fssg_WC_Gateway_FastSpring_GooglePay',
+    'fastspring_alipay' => 'fssg_WC_Gateway_FastSpring_AliPay',
   );
 
   $ordering = (array) get_option('woocommerce_gateway_order');
@@ -526,7 +547,7 @@ add_filter('woocommerce_available_payment_gateways', function ($gateways) {
 // 4. ADMIN TABS VISIBILITY
 add_filter('woocommerce_get_sections_checkout', function ($sections) {
   $current_section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
-  $fs_sections = array('fastspring', 'fastspring_paypal', 'fastspring_card', 'fastspring_amazon', 'fastspring_wire', 'fastspring_googlepay');
+  $fs_sections = array('fastspring', 'fastspring_paypal', 'fastspring_card', 'fastspring_amazon', 'fastspring_wire', 'fastspring_googlepay', 'fastspring_alipay');
 
   if (in_array($current_section, $fs_sections)) {
     $sections['fastspring'] = __('General', 'woocommerce');
@@ -535,6 +556,7 @@ add_filter('woocommerce_get_sections_checkout', function ($sections) {
     $sections['fastspring_amazon'] = __('FS: Amazon Pay', 'woocommerce');
     $sections['fastspring_wire'] = __('FS: Wire Transfer', 'woocommerce');
     $sections['fastspring_googlepay'] = __('FS: Google Pay', 'woocommerce');
+    $sections['fastspring_alipay'] = __('FS: AliPay', 'woocommerce');
   }
   return $sections;
 }, 999);

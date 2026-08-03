@@ -38,6 +38,7 @@ if ( ! class_exists( 'WC_FastSpring_Upgrade' ) ) :
 				'fastspring_amazon',
 				'fastspring_wire',
 				'fastspring_googlepay',
+				'fastspring_alipay',
 			);
 
 			foreach ( $gateway_ids as $gateway_id ) {

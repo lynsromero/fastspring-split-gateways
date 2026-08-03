@@ -3,7 +3,7 @@
  * Plugin Name:       FastSpring Split Gateways
  * Plugin URI:        https://wordpress.org/plugins/fastspring-split-gateways/
  * Description:       Separate the payment methods to take full control of the FastSpring payment gateway in WooCommerce.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Author:            TIC LTD
  * Author URI:        https://tic.com.bd/
  * License:           GPLv2 or later
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('FSSG_WC_FASTSPRING_VERSION', '1.2.0');
+define('FSSG_WC_FASTSPRING_VERSION', '1.3.0');
 define('FSSG_WC_FASTSPRING_SCRIPT', 'https://sbl.onfastspring.com/sbl/1.0.6/fastspring-builder.min.js');
 define('FSSG_WC_FASTSPRING_MIN_PHP_VER', '5.6.0');
 define('FSSG_WC_FASTSPRING_MIN_WC_VER', '3.0.0');
