@@ -148,3 +148,46 @@ button.button.wc-fs-generate-secret {
 	float: none;
 	vertical-align: middle;
 }
+
+.wc-fs-icon-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.wc-fs-icon-option {
+	align-items: center;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	cursor: pointer;
+	display: inline-flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 10px 14px;
+}
+
+.wc-fs-icon-option img {
+	height: 28px;
+	width: auto;
+}
+
+.wc-fs-icon-option span {
+	color: #1d2327;
+	font-size: 12px;
+}
+
+.wc-fs-icon-option.selected {
+	border-color: #00a32a;
+	box-shadow: 0 0 0 1px #00a32a;
+}
+
+.wc-fs-icon-option input[type="radio"] {
+	margin: 0;
+}
+
+.wc-fs-icon-custom-field {
+	align-items: center;
+	display: flex;
+	margin: 8px 0;
+}

@@ -107,51 +107,97 @@ add_action('plugins_loaded', function () {
         ),
         'icon' => array(
           'title' => __('Icon', 'woocommerce'),
-          'type' => 'icon_upload',
-          'description' => __('Upload a custom icon for this gateway.', 'woocommerce'),
+          'type' => 'gateway_icon',
+          'description' => __('Choose a preset icon or upload a custom image for this gateway.', 'woocommerce'),
           'default' => $this->default_icon,
+          'options' => $this->icon_options(),
         ),
       );
     }
 
     /**
-     * Custom field type for WooCommerce settings to render an image uploader
+     * Preset icons available to the gateway icon picker.
+     *
+     * @return array slug => label
      */
-    public function generate_icon_upload_html($key, $data)
+    protected function icon_options()
+    {
+      return array(
+        'paypal' => __('PayPal', 'woocommerce'),
+        'amazon-pay' => __('Amazon Pay', 'woocommerce'),
+        'google-pay' => __('Google Pay', 'woocommerce'),
+        'wire-transfer' => __('Wire Transfer', 'woocommerce'),
+        'visa' => __('Visa', 'woocommerce'),
+        'mastercard' => __('MasterCard', 'woocommerce'),
+        'amex' => __('Amex', 'woocommerce'),
+        'discover' => __('Discover', 'woocommerce'),
+        'jcb' => __('JCB', 'woocommerce'),
+        'unionpay' => __('Union Pay', 'woocommerce'),
+        'maestro' => __('Maestro', 'woocommerce'),
+        'dinersclub' => __('Diners Club', 'woocommerce'),
+      );
+    }
+
+    /**
+     * Custom field type for WooCommerce settings to render the preset
+     * icon picker (radio cards + custom media uploader).
+     */
+    public function generate_gateway_icon_html($key, $data)
     {
       $field_key = $this->get_field_key($key);
-      $value = $this->get_option($key);
-      wp_enqueue_media();
+      $value = $this->get_option($key, $this->default_icon);
+      $data = wp_parse_args($data, array(
+        'title' => '',
+        'description' => '',
+        'options' => $this->icon_options(),
+      ));
 
       ob_start();
-      ?>
-      <tr valign="top">
-        <th scope="row" class="titledesc">
-          <label for="<?php echo esc_attr($field_key); ?>"><?php echo wp_kses_post($data['title']); ?></label>
-        </th>
-        <td class="forminp">
-          <input class="input-text regular-input" type="text" name="<?php echo esc_attr($field_key); ?>"
-            id="<?php echo esc_attr($field_key); ?>" style="width: 300px; margin-right: 10px;"
-            value="<?php echo esc_attr(is_array($value) ? '' : $value); ?>" />
-          <button type="button" class="button fs_upload_btn" data-target="#<?php echo esc_attr($field_key); ?>">Upload
-            Icon</button>
-          <script type="text/javascript">
-            jQuery(document).ready(function ($) {
-              $('.fs_upload_btn').click(function (e) {
-                e.preventDefault();
-                var btn = $(this);
-                var custom_uploader = wp.media({ title: 'Select Icon', button: { text: 'Use this image' }, multiple: false })
-                  .on('select', function () {
-                    var attachment = custom_uploader.state().get('selection').first().toJSON();
-                    $(btn.data('target')).val(attachment.url);
-                  }).open();
-              });
-            });
-          </script>
-        </td>
-      </tr>
-      <?php
+      include dirname(__FILE__) . '/admin/views/html-gateway-icon-picker.php';
       return ob_get_clean();
+    }
+
+    /**
+     * Validates the gateway icon value.
+     *
+     * Accepts a preset slug or a `custom:<url>` value. Anything else falls
+     * back to the gateway default icon.
+     *
+     * @param string $key   Field key.
+     * @param mixed  $value Submitted value.
+     * @return string
+     */
+    public function validate_gateway_icon($key, $value)
+    {
+      $options = $this->icon_options();
+      if (is_string($value) && isset($options[$value])) {
+        return $value;
+      }
+      if (is_string($value) && strpos($value, 'custom:') === 0) {
+        $url = esc_url_raw(substr($value, 7));
+        if (!empty($url)) {
+          return 'custom:' . $url;
+        }
+      }
+      return $this->default_icon;
+    }
+
+    /**
+     * Resolves a stored icon value to a displayable URL.
+     *
+     * @param mixed $value Stored icon value (slug, custom:<url> or raw URL).
+     * @return string
+     */
+    protected function resolve_icon_url($value)
+    {
+      $options = $this->icon_options();
+      if (is_string($value) && isset($options[$value])) {
+        return FS_SPLIT_GATEWAY_URL . 'assets/icons/' . $value . '.svg';
+      }
+      if (is_string($value) && strpos($value, 'custom:') === 0) {
+        return substr($value, 7);
+      }
+      return is_string($value) ? $value : '';
     }
 
     public function is_available()
@@ -174,8 +220,11 @@ add_action('plugins_loaded', function () {
         }
         $icon_html .= '</span>';
       } elseif (!empty($this->icon) && is_string($this->icon)) {
-        // For PayPal/Amazon, we usually just need the icon itself
-        $icon_html = '<img src="' . esc_url($this->icon) . '" alt="' . esc_attr($this->title) . '" class="fastspring-icon" />';
+        // Slugs resolve to the bundled preset SVG; custom values are URLs.
+        $icon_url = $this->resolve_icon_url($this->icon);
+        if (!empty($icon_url)) {
+          $icon_html = '<img src="' . esc_url($icon_url) . '" alt="' . esc_attr($this->title) . '" class="fastspring-icon" />';
+        }
       }
 
       return apply_filters('woocommerce_gateway_icon', $icon_html, $this->id);
@@ -246,7 +295,7 @@ wp_script_add_data(
       $this->id = 'fastspring_paypal';
       $this->method_title = 'FS: PayPal'; // This is what shows in the Admin List
       $this->default_title = 'Pay with PayPal';    // Default for the User
-      $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/paypal.svg';
+      $this->default_icon = 'paypal';
       $this->default_description = 'Securely complete your payment using PayPal. You can pay with your PayPal balance or linked card/bank account.';
 
       parent::__construct();
@@ -304,7 +353,7 @@ wp_script_add_data(
       $this->id = 'fastspring_amazon';
       $this->method_title = 'FS: Amazon Pay';
       $this->default_title = 'Pay with Amazon Pay';
-      $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/amazon-pay.svg';
+      $this->default_icon = 'amazon-pay';
       $this->default_description = 'Use your Amazon account to pay quickly and securely without entering your payment details again.';
 
       parent::__construct();
@@ -322,7 +371,7 @@ wp_script_add_data(
       $this->id = 'fastspring_wire';
       $this->method_title = 'FS: Wire Transfer';
       $this->default_title = 'Pay via Bank Transfer';
-      $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/wire-transfer.svg';
+      $this->default_icon = 'wire-transfer';
       $this->default_description = 'Transfer the payment directly to our bank account. Your order will be processed after the payment is confirmed.';
 
       parent::__construct();
@@ -340,7 +389,7 @@ wp_script_add_data(
       $this->id = 'fastspring_googlepay';
       $this->method_title = 'FS: Google Pay';
       $this->default_title = 'Pay with Google Pay';
-      $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/google-pay.svg';
+      $this->default_icon = 'google-pay';
       $this->default_description = 'Checkout quickly using Google Pay. Safe, fast, and convenient on mobile and desktop devices.';
 
       parent::__construct();

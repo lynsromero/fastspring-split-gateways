@@ -81,6 +81,8 @@ if ( ! class_exists( 'WC_FastSpring_Admin_Settings' ) ) :
 				FSSG_WC_FASTSPRING_VERSION
 			);
 
+			wp_enqueue_media();
+
 			wp_enqueue_script(
 				'wc-fastspring-admin',
 				FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/js/admin-settings.js',
@@ -100,6 +102,8 @@ if ( ! class_exists( 'WC_FastSpring_Admin_Settings' ) ) :
 						'connection_fail'  => __( 'Connection failed. Please check your storefront path and credentials.', 'fastspring-split-gateways' ),
 						'generate_secret'  => __( 'Generating secret...', 'fastspring-split-gateways' ),
 						'secret_generated' => __( 'Webhook secret generated. Save your settings to keep the new secret.', 'fastspring-split-gateways' ),
+						'select_icon'      => __( 'Select Icon', 'fastspring-split-gateways' ),
+						'use_this_image'   => __( 'Use this image', 'fastspring-split-gateways' ),
 					),
 				)
 			);

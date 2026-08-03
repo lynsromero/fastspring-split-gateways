@@ -13,11 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wc-fs-header">
 	<div class="wc-fs-header__row">
 		<div class="wc-fs-header__logo">
-			<img src="<?php echo esc_url( FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/fastspring-logo.svg' ); ?>" alt="FastSpring" />
+			<img src="<?php echo esc_url( FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/fastspring-logo.png' ); ?>" alt="FastSpring" />
 		</div>
 		<div class="wc-fs-header__logo-fs">
 			<span class="wc-fs-header__poweredby"><?php esc_html_e( 'Powered by', 'fastspring-split-gateways' ); ?></span>&nbsp;&nbsp;
-			<img src="<?php echo esc_url( FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/fastspring-mark.svg' ); ?>" alt="FastSpring" />
+			<img src="<?php echo esc_url( FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/fastspring-logo.png' ); ?>" alt="FastSpring" />
 		</div>
 	</div>
 	<div class="wc-fs-header__row">

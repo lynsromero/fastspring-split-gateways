@@ -1,8 +1,9 @@
 /**
  * FastSpring Split Gateways - Admin scripts.
  *
- * Conditional field visibility (data-show-if), multi-select reordering and
- * the Connection Test / Generate Secret AJAX actions.
+ * Conditional field visibility (data-show-if), multi-select reordering,
+ * the Connection Test / Generate Secret AJAX actions and the gateway icon
+ * picker (preset radios + custom media uploader).
  *
  * @package fastspring-split-gateways
  */
@@ -128,9 +129,50 @@
 		});
 	}
 
+	function syncIconValue($row) {
+		var $choice = $row.find('input[name="wc_fs_icon_choice"]:checked');
+		var $hidden = $row.find('.wc-fs-icon-value');
+		if (!$choice.length || !$hidden.length) {
+			return;
+		}
+		if ($choice.val() === 'custom') {
+			var url = $.trim($row.find('.wc-fs-icon-custom-url').val());
+			$hidden.val(url ? 'custom:' + url : '');
+		} else {
+			$hidden.val($choice.val());
+		}
+	}
+
+	function updateIconPicker($row) {
+		var $choice = $row.find('input[name="wc_fs_icon_choice"]:checked');
+		$row.find('.wc-fs-icon-custom-field').toggle($choice.length > 0 && $choice.val() === 'custom');
+		syncIconValue($row);
+	}
+
+	function iconUpload() {
+		var $row = $(this).closest('.wc-fs-icon-picker');
+		var $customRadio = $row.find('input[name="wc_fs_icon_choice"][value="custom"]');
+		if ($customRadio.length) {
+			$customRadio.prop('checked', true).trigger('change');
+		}
+		var uploader = wp.media({
+			title: params.messages.select_icon || 'Select Icon',
+			button: { text: params.messages.use_this_image || 'Use this image' },
+			multiple: false
+		}).on('select', function () {
+			var attachment = uploader.state().get('selection').first().toJSON();
+			var url = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
+			$row.find('.wc-fs-icon-custom-url').val(url).trigger('change');
+		}).open();
+	}
+
 	$(function () {
 		var prefix = getPrefix();
 		updateConditionalFields();
+
+		$('.wc-fs-icon-picker').each(function () {
+			updateIconPicker($(this));
+		});
 
 		$(document).on('change', '[name^="' + prefix + '"]', function () {
 			var $this = $(this);
@@ -147,5 +189,18 @@
 
 		$(document).on('click', '.wc-fs-connection-test', connectionTest);
 		$(document).on('click', '.wc-fs-generate-secret', generateSecret);
+
+		$(document).on('change', 'input[name="wc_fs_icon_choice"]', function () {
+			var $row = $(this).closest('.wc-fs-icon-picker');
+			$row.find('.wc-fs-icon-option').removeClass('selected');
+			$(this).closest('.wc-fs-icon-option').addClass('selected');
+			updateIconPicker($row);
+		});
+
+		$(document).on('change input', '.wc-fs-icon-custom-url', function () {
+			syncIconValue($(this).closest('.wc-fs-icon-picker'));
+		});
+
+		$(document).on('click', '.wc-fs-icon-upload-btn', iconUpload);
 	});
 })(jQuery);
