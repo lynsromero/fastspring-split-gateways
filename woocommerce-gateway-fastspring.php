@@ -189,12 +189,15 @@ if (!class_exists('fssg_WC_FastSpring')):
                 return;
             }
             else {
+                // Branded admin settings framework (mirrors Payment Plugins Stripe).
+                // Loaded before the gateways because it defines the settings trait
+                // the gateway classes consume.
+                include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-settings-api.php';
+
                 include_once dirname(__FILE__) . '/includes/class-wc-gateway-fastspring.php';
                 include_once dirname(__FILE__) . '/includes/class-fastspring-sub-gateways.php';
             }
 
-            // Branded admin settings framework (mirrors Payment Plugins Stripe)
-            include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-settings-api.php';
             include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-api-settings.php';
             include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-advanced-settings.php';
             include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-admin-settings.php';
@@ -379,11 +382,7 @@ if (!class_exists('fssg_WC_FastSpring')):
             $methods[] = 'fssg_WC_Gateway_FastSpring_PayPal';
             $methods[] = 'fssg_WC_Gateway_FastSpring_GooglePay';
             $methods[] = 'fssg_WC_Gateway_FastSpring_Amazon';
-            $methods[] = 'fssg_WC_Gateway_FastSpring_ApplePay';
             $methods[] = 'fssg_WC_Gateway_FastSpring_Wire';
-            $methods[] = 'fssg_WC_Gateway_FastSpring_Venmo';
-            $methods[] = 'fssg_WC_Gateway_FastSpring_AliPay';
-            $methods[] = 'fssg_WC_Gateway_FastSpring_CashApp';
             return $methods;
         }
 

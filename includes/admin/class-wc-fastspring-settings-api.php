@@ -140,9 +140,20 @@ if ( ! trait_exists( 'WC_FastSpring_Settings_Trait' ) ) :
 			$this->display_errors();
 			$this->output_settings_nav();
 			printf( '<input type="hidden" id="wc_fs_prefix" name="wc_fs_prefix" value="%1$s"/>', esc_attr( $this->get_prefix() ) );
-			parent::admin_options();
+			$this->admin_table();
 			echo '</div>';
 			$this->admin_output = true;
+		}
+
+		/**
+		 * Renders the settings table.
+		 *
+		 * Non-gateway settings pages fall back to the core WC_Settings_API table
+		 * output. Payment gateways override this so the WooCommerce back-header
+		 * (wc_back_header) is not rendered inside the branded container.
+		 */
+		protected function admin_table() {
+			parent::admin_options();
 		}
 
 		/**

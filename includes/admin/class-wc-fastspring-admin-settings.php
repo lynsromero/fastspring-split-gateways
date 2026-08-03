@@ -124,6 +124,11 @@ if ( ! class_exists( 'WC_FastSpring_Admin_Settings' ) ) :
 					display: none !important;
 				}
 
+				body[class*="woocommerce_page_wc-settings-checkout-section-fs_"] ul.subsubsub,
+				body[class*="woocommerce_page_wc-settings-checkout-section-fastspring"] ul.subsubsub {
+					display: none !important;
+				}
+
 				#wpcontent #wpbody {
 					margin-top: 0;
 				}

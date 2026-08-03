@@ -40,6 +40,7 @@ add_action('plugins_loaded', function () {
         $this->default_title = $stored_default_title;
       }
       $this->method_description = $stored_method_desc;
+      $this->tab_title = preg_replace('/^FS:\s*/', '', (string) $this->method_title);
 
       $this->init_form_fields();
       $this->init_settings();
@@ -83,14 +84,6 @@ add_action('plugins_loaded', function () {
       if ($current_section === $this->id) {
         parent::process_admin_options();
       }
-    }
-    // Required for the WooCommerce generic admin UI to output fields
-    public function admin_options()
-    {
-      echo '<h2>' . esc_html($this->method_title) . '</h2>';
-      echo '<table class="form-table">';
-      $this->generate_settings_html();
-      echo '</table>';
     }
 
     public function init_form_fields()

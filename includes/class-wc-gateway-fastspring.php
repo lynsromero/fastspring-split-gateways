@@ -12,11 +12,17 @@ include_once dirname(__FILE__) . '/class-wc-gateway-fastspring-builder.php';
  */
 class fssg_WC_Gateway_FastSpring extends WC_Payment_Gateway
 {
+    use WC_FastSpring_Settings_Trait;
 
     /**
      * @var string
      */
     public $default_title;
+
+    /**
+     * @var string Branded navigation tab title.
+     */
+    public $tab_title;
 
     /**
      * Constructor
@@ -27,6 +33,7 @@ class fssg_WC_Gateway_FastSpring extends WC_Payment_Gateway
         $this->method_title = __('FastSpring', 'woocommerce-gateway-fastspring');
         $this->default_title = __('FastSpring', 'woocommerce-gateway-fastspring');
         $this->method_description = __('This plugin provides checkout payment processing by <a href="https://fastspring.com" target="_blank">FastSpring</a> using their hosted or popup storefronts. ');
+        $this->tab_title = __('General', 'fastspring-split-gateways');
 
         $this->has_fields = true;
         $this->supports = array(
@@ -75,6 +82,16 @@ class fssg_WC_Gateway_FastSpring extends WC_Payment_Gateway
         add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
         add_action('woocommerce_api_wc_gateway_fastspring_commerce', array($this, 'return_handler'));
+        add_filter('wc_fs_settings_nav_tabs', array($this, 'admin_nav_tab'));
+    }
+
+    /**
+     * Renders the branded settings table without the WooCommerce back-header.
+     */
+    protected function admin_table()
+    {
+        echo wp_kses_post(wpautop($this->get_method_description()));
+        echo '<table class="form-table">' . $this->generate_settings_html($this->get_form_fields(), false) . '</table>'; // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
     }
 
     /**
