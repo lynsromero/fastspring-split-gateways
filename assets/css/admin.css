@@ -1,0 +1,150 @@
+/**
+ * FastSpring Split Gateways - Admin styles.
+ *
+ * Branded settings chrome mirroring the Payment Plugins Stripe admin layout.
+ *
+ * @package fastspring-split-gateways
+ */
+
+body.woocommerce_page_wc-settings #mainform {
+	background-color: #fff;
+}
+
+.wc-fs-settings-container {
+	padding: 0;
+}
+
+.wc-fs-header {
+	padding: 16px 0 0;
+}
+
+.wc-fs-header:after {
+	border-bottom: 1px solid #dcdcde;
+	content: " ";
+	display: flex;
+	margin: -2px;
+	width: 100%;
+}
+
+.wc-fs-header__row {
+	display: flex;
+	flex-direction: row;
+}
+
+.wc-fs-header__logo {
+	align-items: center;
+	display: flex;
+	flex: 1;
+}
+
+.wc-fs-header__logo img {
+	height: 26px;
+	width: auto;
+}
+
+.wc-fs-header__logo-fs {
+	align-items: center;
+	display: flex;
+	flex: 1;
+	justify-content: flex-end;
+}
+
+.wc-fs-header__poweredby {
+	color: #646970;
+	font-size: 12px;
+}
+
+.wc-fs-header__logo-fs img {
+	height: 18px;
+	width: auto;
+}
+
+.wc-fs-nav {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 12px 0 0 -12px !important;
+}
+
+.wc-fs-nav__item {
+	align-items: center;
+	border-bottom: 2px solid transparent;
+	color: #646970;
+	display: flex;
+	font-weight: 500;
+	padding: 8px 16px;
+	position: relative;
+	text-decoration: none;
+}
+
+.wc-fs-nav__item:first-child {
+	padding-left: 16px;
+}
+
+.wc-fs-nav__item:hover {
+	color: #1d2327;
+}
+
+.wc-fs-nav__item.active {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+.wc-fs-nav__item.active:after {
+	background: #00a32a;
+	border: 0;
+	bottom: -1px;
+	content: " ";
+	display: block;
+	height: 2px;
+	left: 0;
+	position: absolute;
+	width: 100%;
+	z-index: 9999999;
+}
+
+.wc-fs-settings-container .wc-fs-settings {
+	margin-top: 16px;
+}
+
+p.wc-fs-webhook {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	color: #1d2327;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 12px;
+	margin: 0 0 6px;
+	max-width: 440px;
+	padding: 8px 12px;
+	word-break: break-all;
+}
+
+textarea.fs-private-key,
+textarea.fs-private-key:focus {
+	font-family: Consolas, Monaco, monospace;
+	min-height: 120px;
+}
+
+button.button.wc-fs-connection-test,
+button.button.wc-fs-generate-secret {
+	margin-bottom: 6px;
+}
+
+.wc-fs-message {
+	font-size: 12px;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+.wc-fs-message.success {
+	color: #00a32a;
+}
+
+.wc-fs-message.error {
+	color: #d63638;
+}
+
+.wc-fs-spinner {
+	float: none;
+	vertical-align: middle;
+}

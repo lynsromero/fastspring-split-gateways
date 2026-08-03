@@ -246,9 +246,11 @@ class fssg_WC_Gateway_FastSpring_Builder
   /**
    * Builds JSON payload
    *
+   * @param string $method Optional FastSpring payment method value (e.g. 'paypal').
+   *                       When passed, the popup is restricted to that method.
    * @return object
    */
-  public static function get_json_payload()
+  public static function get_json_payload($method = '')
   {
     $payload = array(
       'tags' => self::get_order_tags(),
@@ -256,16 +258,26 @@ class fssg_WC_Gateway_FastSpring_Builder
       'items' => self::get_cart_items(),
     );
 
-    if (isset($_POST['payment_method'])) {
-      $method_map = array(
-        'fastspring_paypal' => 'paypal',
-        'fastspring_card' => 'card',
-        'fastspring_amazon' => 'amazon',
-        'fastspring_wire' => 'wire',
-        'fastspring_googlepay' => 'googlepay'
-      );
-      if (isset($method_map[$_POST['payment_method']])) {
-        $payload['paymentMethod'] = $method_map[$_POST['payment_method']];
+    $force = !empty($method);
+
+    $method_map = array(
+      'fastspring_paypal' => 'paypal',
+      'fastspring_card' => 'card',
+      'fastspring_amazon' => 'amazon',
+      'fastspring_googlepay' => 'googlepay',
+      'fastspring_applepay' => 'applepay',
+      'fastspring_alipay' => 'alipay'
+    );
+
+    $selected = $force ? sanitize_key($method) : '';
+    if (!$selected && isset($_POST['payment_method'])) {
+      $selected = sanitize_text_field(wp_unslash($_POST['payment_method']));
+    }
+
+    if ($selected && isset($method_map[$selected])) {
+      $payload['paymentMethod'] = $method_map[$selected];
+      if ($force) {
+        $payload['hideOtherPaymentMethods'] = true;
       }
     }
 
@@ -273,26 +285,135 @@ class fssg_WC_Gateway_FastSpring_Builder
   }
 
   /**
-   * Builds encrypted JSON payload
+   * Builds a secure payload for a single product (express "Buy Now" checkout).
    *
+   * @param int    $product_id Product ID.
+   * @param int    $quantity   Quantity.
+   * @param string $method     FastSpring payment method value (card, paypal, googlepay...).
+   * @param int    $order_id   Optional WooCommerce order ID to tag for webhook lookups.
+   * @return array Payload.
+   */
+  public static function get_express_payload($product_id, $quantity, $method, $order_id = 0)
+  {
+    $product_id = absint($product_id);
+    $quantity = absint($quantity);
+    if (!$product_id || $quantity < 1) {
+      $quantity = 1;
+    }
+
+    $product = wc_get_product($product_id);
+    if (!$product) {
+      return array();
+    }
+
+    $item = array(
+      'product' => $product->get_slug(),
+      'quantity' => $quantity,
+      'pricing' => array(
+        'quantityBehavior' => 'lock',
+        'price' => array(
+          get_woocommerce_currency() => (float) $product->get_price(),
+        ),
+      ),
+      'display' => array(
+        'en' => $product->get_name(),
+      ),
+      'description' => array(
+        'summary' => array(
+          'en' => $product->get_short_description(),
+        ),
+        'full' => array(
+          'en' => $product->get_short_description(),
+        ),
+      ),
+      'image' => self::get_image($product->get_image_id()),
+      'removable' => false,
+      'sku' => $product->get_sku(),
+    );
+
+    $tags = array('express_checkout' => true);
+    if ($order_id) {
+      $tags['store_order_id'] = absint($order_id);
+    }
+
+    $payload = array(
+      'tags' => $tags,
+      'items' => array($item),
+    );
+
+    if ($method && in_array($method, array('card', 'paypal', 'googlepay', 'applepay', 'amazon', 'alipay'), true)) {
+      $payload['paymentMethod'] = $method;
+      $payload['hideOtherPaymentMethods'] = true;
+    }
+
+    return $payload;
+  }
+
+  /**
+   * Builds encrypted JSON payload, optionally restricted to a payment method.
+   *
+   * @param string $method Optional FastSpring payment method value.
    * @return object
    */
-  public static function get_secure_json_payload()
+  public static function get_secure_json_payload($method = '')
   {
     $aes_key = self::aes_key_generate();
-    $payload = self::get_json_payload();
+    $payload = self::get_json_payload($method);
     $encypted = self::encrypt_payload($aes_key, json_encode($payload));
     $key = self::encrypt_key($aes_key);
 
-    return self::get_setting('testmode') === 'yes' ? [
+    return self::is_test_mode() ? array(
       'payload' => $payload,
       'key' => ''
-
-    ] : [
+    ) : array(
       'payload' => $encypted,
       'key' => $key
+    );
+  }
 
-    ];
+  /**
+   * Builds an encrypted payload for the express "Buy Now" checkout.
+   *
+   * @param int    $product_id Product ID.
+   * @param int    $quantity   Quantity.
+   * @param string $method     FastSpring payment method value.
+   * @param int    $order_id   Optional WooCommerce order ID.
+   * @return array
+   */
+  public static function get_secure_express_payload($product_id, $quantity, $method, $order_id = 0)
+  {
+    $aes_key = self::aes_key_generate();
+    $payload = self::get_express_payload($product_id, $quantity, $method, $order_id);
+
+    if (empty($payload)) {
+      return array();
+    }
+
+    if (self::is_test_mode()) {
+      return array(
+        'payload' => $payload,
+        'key' => ''
+      );
+    }
+
+    $encypted = self::encrypt_payload($aes_key, json_encode($payload));
+    $key = self::encrypt_key($aes_key);
+
+    return array(
+      'payload' => $encypted,
+      'key' => $key
+    );
+  }
+
+  /**
+   * Whether test mode is enabled (raw option check).
+   *
+   * @return bool
+   */
+  public static function is_test_mode()
+  {
+    $settings = get_option('woocommerce_fastspring_settings', array());
+    return isset($settings['testmode']) && 'yes' === $settings['testmode'];
   }
 
   /**

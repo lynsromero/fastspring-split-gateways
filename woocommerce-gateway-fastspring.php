@@ -3,7 +3,7 @@
  * Plugin Name:       FastSpring Split Gateways
  * Plugin URI:        https://wordpress.org/plugins/fastspring-split-gateways/
  * Description:       Separate the payment methods to take full control of the FastSpring payment gateway in WooCommerce.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            TIC LTD
  * Author URI:        https://tic.com.bd/
  * License:           GPLv2 or later
@@ -26,12 +26,13 @@ if (!defined('ABSPATH')) {
 /**
  * Required minimums and constants
  */
-define('FSSG_WC_FASTSPRING_VERSION', '1.0.0');
-define('FSSG_WC_FASTSPRING_SCRIPT', 'https://d1f8f9xcsvx3ha.cloudfront.net/sbl/0.8.3/fastspring-builder.min.js');
+define('FSSG_WC_FASTSPRING_VERSION', '1.1.0');
+define('FSSG_WC_FASTSPRING_SCRIPT', 'https://sbl.onfastspring.com/sbl/1.0.6/fastspring-builder.min.js');
 define('FSSG_WC_FASTSPRING_MIN_PHP_VER', '5.6.0');
 define('FSSG_WC_FASTSPRING_MIN_WC_VER', '3.0.0');
 define('FSSG_WC_FASTSPRING_MAIN_FILE', __FILE__);
 define('FSSG_WC_FASTSPRING_PLUGIN_URL', plugins_url('', __FILE__));
+define('FSSG_WC_FASTSPRING_PLUGIN_DIR', dirname(__FILE__));
 
 if (!class_exists('fssg_WC_FastSpring')):
 
@@ -191,6 +192,15 @@ if (!class_exists('fssg_WC_FastSpring')):
                 include_once dirname(__FILE__) . '/includes/class-wc-gateway-fastspring.php';
                 include_once dirname(__FILE__) . '/includes/class-fastspring-sub-gateways.php';
             }
+
+            // Branded admin settings framework (mirrors Payment Plugins Stripe)
+            include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-settings-api.php';
+            include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-api-settings.php';
+            include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-advanced-settings.php';
+            include_once dirname(__FILE__) . '/includes/admin/class-wc-fastspring-admin-settings.php';
+
+            // Express checkout (product page + cart page)
+            include_once dirname(__FILE__) . '/includes/class-fastspring-express.php';
 
             load_plugin_textdomain('woocommerce-gateway-fastspring', false, plugin_basename(dirname(__FILE__)) . '/languages');
 
@@ -367,9 +377,13 @@ if (!class_exists('fssg_WC_FastSpring')):
             $methods[] = 'fssg_WC_Gateway_FastSpring';
             $methods[] = 'fssg_WC_Gateway_FastSpring_CreditCard';
             $methods[] = 'fssg_WC_Gateway_FastSpring_PayPal';
-            $methods[] = 'fssg_WC_Gateway_FastSpring_Amazon';
             $methods[] = 'fssg_WC_Gateway_FastSpring_GooglePay';
+            $methods[] = 'fssg_WC_Gateway_FastSpring_Amazon';
+            $methods[] = 'fssg_WC_Gateway_FastSpring_ApplePay';
             $methods[] = 'fssg_WC_Gateway_FastSpring_Wire';
+            $methods[] = 'fssg_WC_Gateway_FastSpring_Venmo';
+            $methods[] = 'fssg_WC_Gateway_FastSpring_AliPay';
+            $methods[] = 'fssg_WC_Gateway_FastSpring_CashApp';
             return $methods;
         }
 

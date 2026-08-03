@@ -71,19 +71,32 @@ class fssg_WC_Gateway_FastSpring_Handler
             return 'pending';
         }
 
-        $url = 'https://api.fastspring.com/orders/' . $id;
+        $url = 'https://api.fastspring.com/orders/' . rawurlencode(sanitize_text_field($id));
 
-        $context = stream_context_create(array(
-            'http' => array(
-              'user_agent' => 'Mozilla/5.0', // Not important what it is but must be set
-              'header' => "Authorization: Basic " . base64_encode(
-                  self::get_setting('api_username') . ':' . self::get_setting('api_password')
-              ),
-            )));
+        $auth = base64_encode(sanitize_text_field(self::get_setting('api_username')) . ':' . sanitize_text_field(self::get_setting('api_password')));
 
-        $data = @json_decode(file_get_contents($url, false, $context));
+        $response = wp_remote_get($url, array(
+            'timeout' => 15,
+            'headers' => array(
+                'Authorization' => 'Basic ' . $auth,
+                'User-Agent'    => 'Mozilla/5.0',
+            ),
+        ));
 
-        if ($data && $data->completed === true) {
+        if (is_wp_error($response)) {
+            $this->log(sprintf('API order %s check failed: %s', $id, $response->get_error_message()));
+            return 'pending';
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if (200 !== (int) $code) {
+            $this->log(sprintf('API order %s not found (HTTP %s)', $id, $code));
+            return 'pending';
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response));
+
+        if ($data && isset($data->completed) && true === $data->completed) {
             $this->log(sprintf('API order %s completion checked', $id));
             return 'completed';
         }
@@ -98,7 +111,9 @@ class fssg_WC_Gateway_FastSpring_Handler
     {
         $payload = json_decode(file_get_contents('php://input'));
 
-        $allowed = wp_verify_nonce($payload->security, 'wc-fastspring-receipt');
+        $security = isset($payload->security) ? sanitize_text_field(wp_unslash($payload->security)) : '';
+
+        $allowed = wp_verify_nonce($security, 'wc-fastspring-receipt');
 
         if (!$allowed) {
             wp_send_json_error('Access denied');
@@ -115,16 +130,16 @@ class fssg_WC_Gateway_FastSpring_Handler
         $order_status = $order->get_status();
 
         // Popup closed with payment
-        if ($order && $payload->reference) {
+        if ($order && !empty($payload->reference)) {
 
             // Get API order status if available
-            $status = $this->get_order_status($payload->id);
+            $status = $this->get_order_status(isset($payload->id) ? $payload->id : '');
 
             // Remove cart
             WC()->cart->empty_cart();
 
-            $order->set_transaction_id($payload->reference);
-            $order->update_meta_data('fs_order_id', $payload->id);
+            $order->set_transaction_id(sanitize_text_field($payload->reference));
+            $order->update_meta_data('fs_order_id', sanitize_text_field($payload->id));
 
             if ($status === 'completed' && $order->payment_complete($payload->reference)) {
                 $this->log(sprintf('Marking order ID %s as completed', $order->get_id()));
@@ -194,9 +209,13 @@ class fssg_WC_Gateway_FastSpring_Handler
             return wp_send_json_error();
         }
 
-        foreach ($events as $event) {
-            do_action('woocommerce_fastspring_handle_webhook_request', $event);
+        if (is_array($events)) {
+            foreach ($events as $event) {
+                do_action('woocommerce_fastspring_handle_webhook_request', $event);
+            }
         }
+
+        return wp_send_json_success();
     }
 
     /**
@@ -355,22 +374,22 @@ class fssg_WC_Gateway_FastSpring_Handler
 
         $secret = self::get_setting('webhook_secret');
 
-        $headers = getallheaders();
-        $hash = base64_encode(hash_hmac('sha256', file_get_contents('php://input'), $secret, true));
+        $raw_body = file_get_contents('php://input');
+        $hash = base64_encode(hash_hmac('sha256', $raw_body, $secret, true));
 
-        $sig = $_SERVER['HTTP_X_FS_SIGNATURE'];
+        $sig = isset($_SERVER['HTTP_X_FS_SIGNATURE']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FS_SIGNATURE'])) : '';
 
-        if (!$sig) {
+        if (empty($sig)) {
             $this->log('No secret provided by FastSpring webhook');
             return true;
         }
 
-        if (!$secret) {
+        if (empty($secret)) {
             $this->log('Invalid webhook secret');
             return false;
         }
 
-        return $sig === $hash;
+        return hash_equals($sig, $hash);
     }
 
     /**
