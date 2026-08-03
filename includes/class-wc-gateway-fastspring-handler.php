@@ -23,7 +23,7 @@ if (!function_exists('getallheaders')) {
  *
  * @since 1.0.0
  */
-class WC_Gateway_FastSpring_Handler
+class fssg_WC_Gateway_FastSpring_Handler
 {
 
   /**
@@ -135,7 +135,7 @@ class WC_Gateway_FastSpring_Handler
                 $order->update_status('pending', __('Order pending payment approval.', 'woocommerce'));
             }
 
-            $data = ["redirect_url" => WC_Gateway_FastSpring_Handler::get_return_url($order), 'order_id' => $order_id];
+            $data = ["redirect_url" => fssg_WC_Gateway_FastSpring_Handler::get_return_url($order), 'order_id' => $order_id];
 
             wp_send_json($data);
         } else {
@@ -175,8 +175,8 @@ class WC_Gateway_FastSpring_Handler
      */
     public function init()
     {
-        add_action('wc_ajax_wc_fastspring_get_receipt', array($this, 'ajax_get_receipt'));
-        //add_action('wc_ajax_wc_fastspring_get_payload', array($this, 'ajax_get_payload'));
+        add_action('wc_ajax_fssg_wc_fastspring_get_receipt', array($this, 'ajax_get_receipt'));
+        //add_action('wc_ajax_fssg_wc_fastspring_get_payload', array($this, 'ajax_get_payload'));
 
         add_action('woocommerce_api_wc_gateway_fastspring', array($this, 'listen_webhook_request'));
         add_action('woocommerce_fastspring_handle_webhook_request', array($this, 'handle_webhook_request'));
@@ -380,8 +380,8 @@ class WC_Gateway_FastSpring_Handler
      */
     public static function log($message)
     {
-        WC_FastSpring::log($message);
+        fssg_WC_FastSpring::log($message);
     }
 }
 
-new WC_Gateway_FastSpring_Handler();
+new fssg_WC_Gateway_FastSpring_Handler();

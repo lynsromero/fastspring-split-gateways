@@ -6,11 +6,11 @@ if (!defined('ABSPATH')) {
 include_once dirname(__FILE__) . '/class-wc-gateway-fastspring-builder.php';
 
 /**
- * WC_Gateway_FastSpring class.
+ * fssg_WC_Gateway_FastSpring class.
  *
  * @extends WC_Payment_Gateway
  */
-class WC_Gateway_FastSpring extends WC_Payment_Gateway
+class fssg_WC_Gateway_FastSpring extends WC_Payment_Gateway
 {
 
     /**
@@ -71,7 +71,7 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
         }
 
         // Hooks.
-        add_action('wc_ajax_wc_fastspring_order_complete', array($this, 'ajax_order_complete'));
+        add_action('wc_ajax_fssg_wc_fastspring_order_complete', array($this, 'ajax_order_complete'));
         add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
         add_action('woocommerce_api_wc_gateway_fastspring_commerce', array($this, 'return_handler'));
@@ -181,19 +181,19 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
     public function payment_icons()
     {
         return apply_filters(
-            'wc_fastspring_payment_icons',
+            'fssg_wc_fastspring_payment_icons',
             array(
-                'paypal' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/paypal.svg" class="fastspring-visa-icon fastspring-icon" alt="PayPal" />',
-                'visa' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/visa.svg" class="fastspring-visa-icon fastspring-icon" alt="Visa" />',
-                'amex' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/amex.svg" class="fastspring-amex-icon fastspring-icon" alt="American Express" />',
-                'mastercard' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/mastercard.svg" class="fastspring-mastercard-icon fastspring-icon" alt="Mastercard" />',
-                'discover' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/discover.svg" class="fastspring-discover-icon fastspring-icon" alt="Discover" />',
-                'diners' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/diners.svg" class="fastspring-diners-icon fastspring-icon" alt="Diners" />',
-                'jcb' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/jcb.svg" class="fastspring-jcb-icon fastspring-icon" alt="JCB" />',
-                'ideal' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/ideal.svg" class="fastspring-ideal-icon fastspring-icon" alt="iDeal" />',
-                'giropay' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/giropay.svg" class="fastspring-giropay-icon fastspring-icon" alt="Giropay" />',
-                'sofort' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/sofort.svg" class="fastspring-sofort-icon fastspring-icon" alt="SOFORT" />',
-                'unionpay' => '<img src="' . WC_FASTSPRING_PLUGIN_URL . '/assets/img/unionpay.svg" class="fastspring-unionpay-icon fastspring-icon" alt="Union Pay" />',
+                'paypal' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/paypal.svg" class="fastspring-visa-icon fastspring-icon" alt="PayPal" />',
+                'visa' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/visa.svg" class="fastspring-visa-icon fastspring-icon" alt="Visa" />',
+                'amex' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/amex.svg" class="fastspring-amex-icon fastspring-icon" alt="American Express" />',
+                'mastercard' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/mastercard.svg" class="fastspring-mastercard-icon fastspring-icon" alt="Mastercard" />',
+                'discover' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/discover.svg" class="fastspring-discover-icon fastspring-icon" alt="Discover" />',
+                'diners' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/diners.svg" class="fastspring-diners-icon fastspring-icon" alt="Diners" />',
+                'jcb' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/jcb.svg" class="fastspring-jcb-icon fastspring-icon" alt="JCB" />',
+                'ideal' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/ideal.svg" class="fastspring-ideal-icon fastspring-icon" alt="iDeal" />',
+                'giropay' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/giropay.svg" class="fastspring-giropay-icon fastspring-icon" alt="Giropay" />',
+                'sofort' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/sofort.svg" class="fastspring-sofort-icon fastspring-icon" alt="SOFORT" />',
+                'unionpay' => '<img src="' . FSSG_WC_FASTSPRING_PLUGIN_URL . '/assets/img/unionpay.svg" class="fastspring-unionpay-icon fastspring-icon" alt="Union Pay" />',
             )
         );
     }
@@ -230,9 +230,9 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
         $suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
 
         if (self::get_setting('enabled')) {
-            wp_enqueue_script('fastspring', WC_FASTSPRING_SCRIPT, '', false, true);
+            wp_enqueue_script('fastspring', FSSG_WC_FASTSPRING_SCRIPT, '', false, true);
 
-            wp_enqueue_script('woocommerce_fastspring', plugins_url('assets/js/fastspring-checkout' . $suffix . '.js', WC_FASTSPRING_MAIN_FILE), array('jquery', 'fastspring'), WC_FASTSPRING_VERSION, true);
+            wp_enqueue_script('woocommerce_fastspring', plugins_url('assets/js/fastspring-checkout' . $suffix . '.js', FSSG_WC_FASTSPRING_MAIN_FILE), array('jquery', 'fastspring'), FSSG_WC_FASTSPRING_VERSION, true);
         }
 
         $fastspring_params = array(
@@ -261,10 +261,10 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
     public function process_payment($order_id)
     {
         $order = wc_get_order($order_id);
-
+        $payload = fssg_WC_Gateway_FastSpring_Builder::get_secure_json_payload();
         return array(
             'result' => 'success',
-            'session' => WC_Gateway_FastSpring_Builder::get_secure_json_payload(),
+            'session' => $payload,
         );
     }
 
@@ -294,7 +294,7 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
      */
     public static function get_setting($option)
     {
-        return WC_FastSpring::get_setting($option);
+        return fssg_WC_FastSpring::get_setting($option);
     }
 
     /**
@@ -304,7 +304,7 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
      */
     public static function log($message)
     {
-        WC_FastSpring::log($message);
+        fssg_WC_FastSpring::log($message);
     }
 
     /**
@@ -319,3 +319,4 @@ class WC_Gateway_FastSpring extends WC_Payment_Gateway
         }
     }
 }
+

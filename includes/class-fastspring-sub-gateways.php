@@ -10,13 +10,14 @@ if (!defined('ABSPATH')) {
 define('FS_SPLIT_GATEWAY_URL', plugin_dir_url(dirname(__FILE__)));
 
 add_action('plugins_loaded', function () {
-  if (!class_exists('WC_Gateway_FastSpring')) {
+  if (!class_exists('fssg_WC_Gateway_FastSpring')) {
     return;
   }
-  class WC_FS_Manual_Gateway extends WC_Gateway_FastSpring
+  class fssg_WC_FS_Manual_Gateway extends fssg_WC_Gateway_FastSpring
   {
     public $default_title = '';
     public $default_icon;
+    public $default_description = '';
 
     public function __construct()
     {
@@ -65,7 +66,7 @@ add_action('plugins_loaded', function () {
         $this->title = !empty($stored_default_title) ? $stored_default_title : $this->default_title;
       }
 
-      $this->description = $this->get_option('description', '');
+      $this->description = $this->get_option('description', $this->default_description);
       $this->icon = $this->get_option('icon', $this->default_icon);
 
       // 3. ONLY hook the save action if we are actually in this section
@@ -109,7 +110,7 @@ add_action('plugins_loaded', function () {
         'description' => array(
           'title' => __('Description', 'woocommerce'),
           'type' => 'textarea',
-          'default' => '',
+          'default' => $this->default_description,
         ),
         'icon' => array(
           'title' => __('Icon', 'woocommerce'),
@@ -196,23 +197,19 @@ add_action('plugins_loaded', function () {
 
     public function process_payment($order_id)
     {
-      // The parent fastspring gateway uses a static method builder or looks at $_POST.
-      // But FastSpring needs to know this was a 'fastspring' method payment for webhooks.
+      
       $order = wc_get_order($order_id);
 
-      // Temporarily set the payment method back to the main fastspring class
-      // so when the webhook fires it knows how to handle it
+      
       $order->set_payment_method('fastspring');
       $order->save();
 
-      // Call the parent process_payment to generate the secure payload
-      return parent::process_payment($order_id);
+      
+      $result = parent::process_payment($order_id);
+      return $result;
     }
 
-    /**
-     * Override    so we forcefully enqueue the core 'fastspring' library
-     * even if the parent gateway is explicitly disabled.
-     */
+    
     public function payment_scripts()
     {
       // 1. Basic check
@@ -233,20 +230,31 @@ add_action('plugins_loaded', function () {
 
       // 3. FIX THE FATAL ERROR: 
       // Check if the constant exists; if not, use the direct URL to FastSpring
-      $fs_script_url = defined('WC_FASTSPRING_SCRIPT') ? WC_FASTSPRING_SCRIPT : 'https://d1f8f9xcsvx3ha.cloudfront.net/sbl/0.0.7/fastspring-builder.min.js';
+wp_enqueue_script(
+    'fastspring',
+    'https://sbl.onfastspring.com/sbl/1.0.6/fastspring-builder.min.js',
+    array('jquery'),
+    null,
+    true
+);
 
-      wp_enqueue_script('fastspring', $fs_script_url, array('jquery'), null, true);
+wp_script_add_data(
+    'fastspring',
+    'data-storefront',
+    'prospct.onfastspring.com/popup-microprokey'
+);
     }
   }
 
-  class WC_Gateway_FastSpring_PayPal extends WC_FS_Manual_Gateway
+  class fssg_WC_Gateway_FastSpring_PayPal extends fssg_WC_FS_Manual_Gateway
   {
     public function __construct()
     {
       $this->id = 'fastspring_paypal';
       $this->method_title = 'FS: PayPal'; // This is what shows in the Admin List
-      $this->default_title = 'PayPal';    // Default for the User
+      $this->default_title = 'Pay with PayPal';    // Default for the User
       $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/paypal.svg';
+      $this->default_description = 'Securely complete your payment using PayPal. You can pay with your PayPal balance or linked card/bank account.';
 
       parent::__construct();
 
@@ -256,14 +264,15 @@ add_action('plugins_loaded', function () {
       }
     }
   }
-  class WC_Gateway_FastSpring_CreditCard extends WC_FS_Manual_Gateway
+  class fssg_WC_Gateway_FastSpring_CreditCard extends fssg_WC_FS_Manual_Gateway
   {
     public function __construct()
     {
       $this->id = 'fastspring_card';
       $this->method_title = 'FS: Credit Card';
-      $this->default_title = 'Credit Card';
+      $this->default_title = 'Pay with Card (Credit/Debit)';
       $this->default_icon = array('visa', 'mastercard');
+      $this->default_description = 'Pay securely using your Visa, MasterCard, or other supported debit/credit cards. Fast and reliable payment processing.';
 
       parent::__construct();
 
@@ -295,14 +304,15 @@ add_action('plugins_loaded', function () {
     }
   }
 
-  class WC_Gateway_FastSpring_Amazon extends WC_FS_Manual_Gateway
+  class fssg_WC_Gateway_FastSpring_Amazon extends fssg_WC_FS_Manual_Gateway
   {
     public function __construct()
     {
       $this->id = 'fastspring_amazon';
       $this->method_title = 'FS: Amazon Pay';
-      $this->default_title = 'Amazon Pay';
+      $this->default_title = 'Pay with Amazon Pay';
       $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/amazon-pay.svg';
+      $this->default_description = 'Use your Amazon account to pay quickly and securely without entering your payment details again.';
 
       parent::__construct();
 
@@ -312,14 +322,15 @@ add_action('plugins_loaded', function () {
     }
   }
 
-  class WC_Gateway_FastSpring_Wire extends WC_FS_Manual_Gateway
+  class fssg_WC_Gateway_FastSpring_Wire extends fssg_WC_FS_Manual_Gateway
   {
     public function __construct()
     {
       $this->id = 'fastspring_wire';
       $this->method_title = 'FS: Wire Transfer';
-      $this->default_title = 'Wire Transfer';
+      $this->default_title = 'Pay via Bank Transfer';
       $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/wire-transfer.svg';
+      $this->default_description = 'Transfer the payment directly to our bank account. Your order will be processed after the payment is confirmed.';
 
       parent::__construct();
 
@@ -329,14 +340,15 @@ add_action('plugins_loaded', function () {
     }
   }
 
-  class WC_Gateway_FastSpring_GooglePay extends WC_FS_Manual_Gateway
+  class fssg_WC_Gateway_FastSpring_GooglePay extends fssg_WC_FS_Manual_Gateway
   {
     public function __construct()
     {
       $this->id = 'fastspring_googlepay';
       $this->method_title = 'FS: Google Pay';
-      $this->default_title = 'Google Pay';
+      $this->default_title = 'Pay with Google Pay';
       $this->default_icon = FS_SPLIT_GATEWAY_URL . 'assets/icons/google-pay.svg';
+      $this->default_description = 'Checkout quickly using Google Pay. Safe, fast, and convenient on mobile and desktop devices.';
 
       parent::__construct();
 
@@ -350,7 +362,7 @@ add_action('plugins_loaded', function () {
   // Now that the classes are defined, we can define the blocks integration
   if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
 
-    class FS_Blocks_Integration extends Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType
+    class fssg_FS_Blocks_Integration extends Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType
     {
       private $gateway;
 
@@ -424,26 +436,26 @@ add_action('plugins_loaded', function () {
 
     // Hook into the block registration
     add_action('woocommerce_blocks_payment_method_type_registration', function (\Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry) {
-      $payment_method_registry->register(new FS_Blocks_Integration(new WC_Gateway_FastSpring_PayPal()));
-      $payment_method_registry->register(new FS_Blocks_Integration(new WC_Gateway_FastSpring_CreditCard()));
-      $payment_method_registry->register(new FS_Blocks_Integration(new WC_Gateway_FastSpring_Amazon()));
-      $payment_method_registry->register(new FS_Blocks_Integration(new WC_Gateway_FastSpring_Wire()));
-      $payment_method_registry->register(new FS_Blocks_Integration(new WC_Gateway_FastSpring_GooglePay()));
+      $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_PayPal()));
+      $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_CreditCard()));
+      $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_Amazon()));
+      $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_Wire()));
+      $payment_method_registry->register(new fssg_FS_Blocks_Integration(new fssg_WC_Gateway_FastSpring_GooglePay()));
     });
   }
 
 }, 11);
 
 // 2. REGISTER THE GATEWAYS (with Sorting Hook)
-add_filter('woocommerce_payment_gateways', 'woocommerce_payment_gateways_order');
-function woocommerce_payment_gateways_order($gateways)
+add_filter('woocommerce_payment_gateways', 'fssg_woocommerce_payment_gateways_order');
+function fssg_woocommerce_payment_gateways_order($gateways)
 {
   $fastspring_gateways = array(
-    'fastspring_paypal' => 'WC_Gateway_FastSpring_PayPal',
-    'fastspring_card' => 'WC_Gateway_FastSpring_CreditCard',
-    'fastspring_amazon' => 'WC_Gateway_FastSpring_Amazon',
-    'fastspring_wire' => 'WC_Gateway_FastSpring_Wire',
-    'fastspring_googlepay' => 'WC_Gateway_FastSpring_GooglePay',
+    'fastspring_paypal' => 'fssg_WC_Gateway_FastSpring_PayPal',
+    'fastspring_card' => 'fssg_WC_Gateway_FastSpring_CreditCard',
+    'fastspring_amazon' => 'fssg_WC_Gateway_FastSpring_Amazon',
+    'fastspring_wire' => 'fssg_WC_Gateway_FastSpring_Wire',
+    'fastspring_googlepay' => 'fssg_WC_Gateway_FastSpring_GooglePay',
   );
 
   $ordering = (array) get_option('woocommerce_gateway_order');
@@ -471,35 +483,41 @@ add_filter('woocommerce_available_payment_gateways', function ($gateways) {
 
 // 4. ADMIN TABS VISIBILITY
 add_filter('woocommerce_get_sections_checkout', function ($sections) {
-  $sections['fastspring_paypal'] = __('FS: PayPal', 'woocommerce');
-  $sections['fastspring_card'] = __('FS: Credit Card', 'woocommerce');
-  $sections['fastspring_amazon'] = __('FS: Amazon Pay', 'woocommerce');
-  $sections['fastspring_wire'] = __('FS: Wire Transfer', 'woocommerce');
-  $sections['fastspring_googlepay'] = __('FS: Google Pay', 'woocommerce');
+  $current_section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
+  $fs_sections = array('fastspring', 'fastspring_paypal', 'fastspring_card', 'fastspring_amazon', 'fastspring_wire', 'fastspring_googlepay');
+
+  if (in_array($current_section, $fs_sections)) {
+    $sections['fastspring'] = __('General', 'woocommerce');
+    $sections['fastspring_paypal'] = __('FS: PayPal', 'woocommerce');
+    $sections['fastspring_card'] = __('FS: Credit Card', 'woocommerce');
+    $sections['fastspring_amazon'] = __('FS: Amazon Pay', 'woocommerce');
+    $sections['fastspring_wire'] = __('FS: Wire Transfer', 'woocommerce');
+    $sections['fastspring_googlepay'] = __('FS: Google Pay', 'woocommerce');
+  }
   return $sections;
 }, 999);
 
 // 5. JS OVERRIDE FOR SHORTCODE CHECKOUT
 add_action('wp_enqueue_scripts', function () {
-    if (is_checkout()) {
-        // 1. Remove the original plugin's script
-        wp_dequeue_script('woocommerce_fastspring');
-        wp_deregister_script('woocommerce_fastspring');
+  if (is_checkout()) {
+    // 1. Remove the original plugin's script
+    wp_dequeue_script('woocommerce_fastspring');
+    wp_deregister_script('woocommerce_fastspring');
 
-        // 2. Register your NEW JS file
-        $js_url = plugin_dir_url(dirname(__FILE__)) . 'assets/js/fs-split-gateways.js';
-        wp_register_script('woocommerce_fastspring_custom', $js_url, ['jquery', 'fastspring'], '2.3.1', true);
+    // 2. Register your NEW JS file
+    $js_url = plugin_dir_url(dirname(__FILE__)) . 'assets/js/fs-split-gateways.js';
+    wp_register_script('woocommerce_fastspring_custom', $js_url, ['jquery', 'fastspring'], '2.3.1', true);
 
-        // 3. Localize the parameters exactly like the original plugin
-        $fastspring_params = array(
-            'ajax_url' => WC_AJAX::get_endpoint('%%endpoint%%'),
-            'nonce' => array(
-                'receipt' => wp_create_nonce('wc-fastspring-receipt'),
-            ),
-        );
-        wp_localize_script('woocommerce_fastspring_custom', 'woocommerce_fastspring_params', apply_filters('woocommerce_fastspring_params', $fastspring_params));
+    // 3. Localize the parameters exactly like the original plugin
+    $fastspring_params = array(
+      'ajax_url' => WC_AJAX::get_endpoint('%%endpoint%%'),
+      'nonce' => array(
+        'receipt' => wp_create_nonce('wc-fastspring-receipt'),
+      ),
+    );
+    wp_localize_script('woocommerce_fastspring_custom', 'woocommerce_fastspring_params', apply_filters('woocommerce_fastspring_params', $fastspring_params));
 
-        // 4. Fire it up
-        wp_enqueue_script('woocommerce_fastspring_custom');
-    }
+    // 4. Fire it up
+    wp_enqueue_script('woocommerce_fastspring_custom');
+  }
 }, 99);
